@@ -1,0 +1,8 @@
+{
+  "name": "XiaGator Lite - Room Server",
+  "version": "20260103",
+  "builds": [{
+    "chipFamily": "NRF52",
+    "parts": [{"path": "XaioGator_Lite_room_server.uf2", "offset": 0}]
+  }]
+}

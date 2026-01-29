@@ -1,0 +1,8 @@
+{
+  "name": "XiaGator Lite - Companion Radio (Bluetooth)",
+  "version": "20260103",
+  "builds": [{
+    "chipFamily": "NRF52",
+    "parts": [{"path": "XaioGator_Lite_companion_radio_ble.uf2", "offset": 0}]
+  }]
+}
