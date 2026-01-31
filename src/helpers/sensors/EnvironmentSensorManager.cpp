@@ -150,10 +150,14 @@ static RAK12500LocationProvider RAK12500_provider;
 #endif
 
 bool EnvironmentSensorManager::begin() {
+  MESH_DEBUG_PRINTLN("[SENSORS] EnvironmentSensorManager::begin() called");
   #if ENV_INCLUDE_GPS
+  MESH_DEBUG_PRINTLN("[SENSORS] ENV_INCLUDE_GPS is defined");
   #ifdef RAK_WISBLOCK_GPS
+  MESH_DEBUG_PRINTLN("[SENSORS] Calling rakGPSInit()");
   rakGPSInit();   //probe base board/sockets for GPS
   #else
+  MESH_DEBUG_PRINTLN("[SENSORS] Calling initBasicGPS()");
   initBasicGPS();
   #endif
   #endif
@@ -547,41 +551,55 @@ bool EnvironmentSensorManager::setSettingValue(const char* name, const char* val
 #if ENV_INCLUDE_GPS
 void EnvironmentSensorManager::initBasicGPS() {
 
-  Serial1.setPins(PIN_GPS_TX, PIN_GPS_RX);
+  MESH_DEBUG_PRINTLN("[GPS] Initializing GPS on Serial1, TX=%d RX=%d", PIN_GPS_TX, PIN_GPS_RX);
+  MESH_DEBUG_PRINTLN("[GPS] NOTE: Trying swapped pins - RX=%d TX=%d", PIN_GPS_TX, PIN_GPS_RX);
+  Serial1.setPins(PIN_GPS_RX, PIN_GPS_TX); // Swap: GPS_TX connects to ESP32 RX, GPS_RX connects to ESP32 TX
 
   #ifdef GPS_BAUD_RATE
   Serial1.begin(GPS_BAUD_RATE);
+  MESH_DEBUG_PRINTLN("[GPS] Serial1 started at %d baud", GPS_BAUD_RATE);
   #else
   Serial1.begin(9600);
+  MESH_DEBUG_PRINTLN("[GPS] Serial1 started at 9600 baud");
   #endif
 
   // Try to detect if GPS is physically connected to determine if we should expose the setting
+  MESH_DEBUG_PRINTLN("[GPS] Calling _location->begin()");
   _location->begin();
+  MESH_DEBUG_PRINTLN("[GPS] Calling _location->reset()");
   _location->reset();
 
   #ifndef PIN_GPS_EN
     MESH_DEBUG_PRINTLN("No GPS wake/reset pin found for this board. Continuing on...");
+  #else
+    MESH_DEBUG_PRINTLN("[GPS] GPS_EN pin: %d", PIN_GPS_EN);
   #endif
 
   // Give GPS a moment to power up and send data
+  MESH_DEBUG_PRINTLN("[GPS] Waiting 1 second for GPS to power up...");
   delay(1000);
 
   // We'll consider GPS detected if we see any data on Serial1
 #ifdef ENV_SKIP_GPS_DETECT
   gps_detected = true;
+  MESH_DEBUG_PRINTLN("[GPS] ENV_SKIP_GPS_DETECT set, assuming GPS detected");
 #else
-  gps_detected = (Serial1.available() > 0);
+  int avail = Serial1.available();
+  gps_detected = (avail > 0);
+  MESH_DEBUG_PRINTLN("[GPS] Serial1.available() = %d, gps_detected = %d", avail, gps_detected);
 #endif
 
   if (gps_detected) {
-    MESH_DEBUG_PRINTLN("GPS detected");
+    MESH_DEBUG_PRINTLN("[GPS] GPS detected");
     #ifdef PERSISTANT_GPS
       gps_active = true;
+      MESH_DEBUG_PRINTLN("[GPS] PERSISTANT_GPS set, GPS will stay active");
       return;
     #endif
   } else {
-    MESH_DEBUG_PRINTLN("No GPS detected");
+    MESH_DEBUG_PRINTLN("[GPS] No GPS detected");
   }
+  MESH_DEBUG_PRINTLN("[GPS] Stopping GPS (not persistent or not detected)");
   _location->stop();
   gps_active = false; //Set GPS visibility off until setting is changed
 }
@@ -705,8 +723,20 @@ void EnvironmentSensorManager::stop_gps() {
 
 void EnvironmentSensorManager::loop() {
   static long next_gps_update = 0;
+  static long next_gps_debug = 0;
 
   #if ENV_INCLUDE_GPS
+  // Debug GPS serial data availability every 10 seconds
+  if (millis() > next_gps_debug) {
+    int avail = Serial1.available();
+    bool enabled = _location->isEnabled();
+    MESH_DEBUG_PRINTLN("[GPS] Serial1.available()=%d, GPS enabled=%d, active=%d, detected=%d", avail, enabled, gps_active, gps_detected);
+    // Send a test command to GPS to verify it's alive
+    Serial1.println("$PMTK000*32"); // Query firmware version
+    MESH_DEBUG_PRINTLN("[GPS] Sent test command to GPS");
+    next_gps_debug = millis() + 10000;
+  }
+  
   _location->loop();
   if (millis() > next_gps_update) {
 
