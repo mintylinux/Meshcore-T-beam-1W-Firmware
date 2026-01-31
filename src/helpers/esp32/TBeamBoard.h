@@ -125,6 +125,12 @@
 //   SX1276
 // };
 
+// Forward declarations for fan control (defined in target.cpp)
+#ifdef TBEAM_1W_SX1262
+extern void activate_fan();
+extern void update_fan_control();
+#endif
+
 class TBeamBoard : public ESP32Board {
 XPowersLibInterface *PMU = NULL;
 //PhysicalLayer * pl;

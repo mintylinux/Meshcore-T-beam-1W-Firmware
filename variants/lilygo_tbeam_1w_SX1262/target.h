@@ -25,5 +25,5 @@ uint32_t radio_get_rng_seed();
 void radio_set_params(float freq, float bw, uint8_t sf, uint8_t cr);
 void radio_set_tx_power(uint8_t dbm);
 mesh::LocalIdentity radio_new_identity();
-void radio_on_tx_complete();  // Called after TX completes (for fan control)
-void radio_fan_loop();         // Must be called in main loop
+void activate_fan();           // Activate cooling fan
+void update_fan_control();     // Update fan state (call in main loop)
