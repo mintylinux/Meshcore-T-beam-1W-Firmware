@@ -261,6 +261,28 @@ bool MyMesh::isAutoAddEnabled() const {
   return (_prefs.manual_add_contacts & 1) == 0;
 }
 
+bool MyMesh::shouldAutoAddContactType(uint8_t type) const {
+  // Auto-add all contact types by default
+  return true;
+}
+
+void MyMesh::onContactsFull() {
+  // Notify when contact list is full
+  // Could send a notification to the app, but for now just debug
+  MESH_DEBUG_PRINTLN("WARN: Contact list is full!");
+}
+
+bool MyMesh::shouldOverwriteWhenFull() const {
+  // Don't overwrite contacts when full, let user manage manually
+  return false;
+}
+
+void MyMesh::onContactOverwrite(const uint8_t* pub_key) {
+  // Called when a contact is overwritten
+  // Could notify the app, but for now just debug
+  MESH_DEBUG_PRINTLN("INFO: Contact overwritten");
+}
+
 void MyMesh::onDiscoveredContact(ContactInfo &contact, bool is_new, uint8_t path_len, const uint8_t* path) {
   if (_serial->isConnected()) {
     if (!isAutoAddEnabled() && is_new) {
