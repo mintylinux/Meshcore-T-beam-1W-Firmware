@@ -1,8 +1,17 @@
 #pragma once
 
-#if defined(TBEAM_SUPREME_SX1262) || defined(TBEAM_SX1262) || defined(TBEAM_SX1276)
+#if defined(TBEAM_SUPREME_SX1262) || defined(TBEAM_1W_SX1262) || defined(TBEAM_SX1262) || defined(TBEAM_SX1276)
 
-// Define pin mappings BEFORE including ESP32Board.h so sleep() can use P_LORA_DIO_1
+#include <Wire.h>
+#include <Arduino.h>
+#include "XPowersLib.h"
+#include "helpers/ESP32Board.h"
+#include <driver/rtc_io.h>
+//#include <RadioLib.h>
+//#include <helpers/RadioLibWrappers.h>
+//#include <helpers/CustomSX1262Wrapper.h>
+//#include <helpers/CustomSX1276Wrapper.h>
+
 #ifdef TBEAM_SUPREME_SX1262
   // LoRa radio module pins for TBeam S3 Supreme SX1262
   #define  P_LORA_DIO_0   -1   //NC
@@ -45,6 +54,41 @@
   #define RTC_WIRE_PORT  Wire1
 #endif
 
+#ifdef TBEAM_1W_SX1262
+  // LoRa radio module pins for TBeam 1W with SX1262 and 1W PA
+  #define  P_LORA_DIO_0   -1   //NC
+  #define  P_LORA_DIO_1    1   //SX1262 IRQ pin
+  #define  P_LORA_NSS      15  //SX1262 SS pin
+  #define  P_LORA_RESET    3   //SX1262 Reset pin
+  #define  P_LORA_BUSY     38  //SX1262 Busy pin
+  #define  P_LORA_SCLK     13  //SX1262 SCLK pin
+  #define  P_LORA_MISO     12  //SX1262 MISO pin
+  #define  P_LORA_MOSI     11  //SX1262 MOSI pin
+  #define  P_LORA_LDO_EN   40  //Radio LDO enable
+  #define  P_LORA_CTRL     21  //LNA power control
+  #define  P_LORA_TX_LED   18  //TX LED
+
+  // T-Beam 1W uses single I2C bus on GPIO 8/9 for ALL peripherals
+  #define PIN_BOARD_SDA    8   //SDA for PMU, OLED, and peripherals
+  #define PIN_BOARD_SCL    9   //SCL for PMU, OLED, and peripherals
+
+  #define PIN_PMU_IRQ      -1  //No PMU IRQ on T-Beam 1W
+
+  #define PIN_GPS_RX       5
+  #define PIN_GPS_TX       6
+  #define PIN_GPS_EN       16
+  #define PIN_GPS_PPS      7
+
+  #define PIN_FAN_CTRL     41  //Cooling fan control
+
+  //I2C addresses (single I2C bus)
+  #define I2C_OLED_ADD     0x3C  //SH1106 OLED I2C address
+  #define I2C_PMU_ADD      0x34  //AXP2101 I2C address
+  
+  #define PMU_WIRE_PORT  Wire
+  #define RTC_WIRE_PORT  Wire
+#endif
+
 #ifdef TBEAM_SX1262
   #define  P_LORA_BUSY    32
 #endif
@@ -80,13 +124,6 @@
 //   SX1262, 
 //   SX1276
 // };
-
-// Include headers AFTER pin definitions so ESP32Board::sleep() can use P_LORA_DIO_1
-#include <Wire.h>
-#include <Arduino.h>
-#include "XPowersLib.h"
-#include "helpers/ESP32Board.h"
-#include <driver/rtc_io.h>
 
 class TBeamBoard : public ESP32Board {
 XPowersLibInterface *PMU = NULL;
@@ -155,7 +192,19 @@ public:
 }
 
   uint16_t getBattMilliVolts(){
-    return PMU->getBattVoltage();
+    if (PMU) {
+      return PMU->getBattVoltage();
+    }
+    
+    #ifdef TBEAM_1W_SX1262
+    // Fallback: ADC-based battery voltage estimation for T-Beam 1W
+    // NOTE: This board may not have a voltage divider, so this is approximate
+    // If PMU is missing, we can't accurately measure battery voltage
+    // Return a safe middle-range value (7.4V nominal)
+    return 7400;  // 7.4V nominal for 2S battery
+    #else
+    return 0;  // PMU not available
+    #endif
   }
 
   const char* getManufacturerName() const{

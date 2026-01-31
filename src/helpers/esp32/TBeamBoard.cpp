@@ -1,4 +1,4 @@
-#if defined(TBEAM_SUPREME_SX1262) || defined(TBEAM_SX1262) || defined(TBEAM_SX1276)
+#if defined(TBEAM_SUPREME_SX1262) || defined(TBEAM_1W_SX1262) || defined(TBEAM_SX1262) || defined(TBEAM_SX1276)
 
 #include <Arduino.h>
 #include "TBeamBoard.h"
@@ -125,11 +125,23 @@ void TBeamBoard::printPMU()
 
 bool TBeamBoard::power_init()
 {
+  // Note: I2C bus (Wire) is already initialized by ESP32Board::begin()
+  // T-Beam Supreme needs Wire1 initialized separately
+  #if defined(TBEAM_SUPREME_SX1262)
+    Wire1.begin(PIN_BOARD_SDA1, PIN_BOARD_SCL1);
+    delay(10);  // Give I2C bus time to stabilize
+  #endif
+  
+  // Give I2C bus extra time to stabilize before PMU access
+  delay(20);
+
   if (!PMU) {
-    #ifdef TBEAM_SUPREME_SX1262
-      PMU = new XPowersAXP2101(PMU_WIRE_PORT, PIN_BOARD_SDA1, PIN_BOARD_SCL1, I2C_PMU_ADD);
+    #if defined(TBEAM_SUPREME_SX1262)
+      PMU = new XPowersAXP2101(Wire1, PIN_BOARD_SDA1, PIN_BOARD_SCL1, I2C_PMU_ADD);
     #else
-      PMU = new XPowersAXP2101(PMU_WIRE_PORT, PIN_BOARD_SDA, PIN_BOARD_SCL, I2C_PMU_ADD);
+      // For T-Beam 1W: Pass Wire AND the correct I2C pins (GPIO 8/9)
+      // Wire has already been initialized by ESP32Board::begin()
+      PMU = new XPowersAXP2101(Wire, PIN_BOARD_SDA, PIN_BOARD_SCL, I2C_PMU_ADD);
     #endif
     if (!PMU->init()) {
         MESH_DEBUG_PRINTLN("Warning: Failed to find AXP2101 power management");
@@ -140,7 +152,12 @@ bool TBeamBoard::power_init()
     }
   }
   if (!PMU) {
-    PMU = new XPowersAXP192(PMU_WIRE_PORT, PIN_BOARD_SDA, PIN_BOARD_SCL, I2C_PMU_ADD);
+    #if defined(TBEAM_SUPREME_SX1262)
+      PMU = new XPowersAXP192(Wire1, PIN_BOARD_SDA1, PIN_BOARD_SCL1, I2C_PMU_ADD);
+    #else
+      // For T-Beam 1W: Pass Wire AND the correct I2C pins (GPIO 8/9)
+      PMU = new XPowersAXP192(Wire, PIN_BOARD_SDA, PIN_BOARD_SCL, I2C_PMU_ADD);
+    #endif
      if (!PMU->init()) {
         MESH_DEBUG_PRINTLN("Warning: Failed to find AXP192 power management");
         delete PMU;
@@ -149,8 +166,24 @@ bool TBeamBoard::power_init()
         MESH_DEBUG_PRINTLN("AXP192 PMU init succeeded, using AXP192 PMU");
     }
   }
-
+  
   if (!PMU) {
+    // XPowersLib calls Wire.end() when PMU object is deleted
+    // Need to re-initialize Wire for other I2C devices (OLED, RTC, etc)
+    #if defined(TBEAM_SUPREME_SX1262)
+      // Wire1 for PMU failed, but Wire for other devices should still work
+    #else
+      Wire.begin(PIN_BOARD_SDA, PIN_BOARD_SCL);
+    #endif
+    
+    // Fallback: Enable GPS power via GPIO when PMU is not present
+    #if defined(TBEAM_1W_SX1262) && defined(PIN_GPS_EN)
+      MESH_DEBUG_PRINTLN("PMU not found - using GPIO fallback for GPS power");
+      pinMode(PIN_GPS_EN, OUTPUT);
+      digitalWrite(PIN_GPS_EN, HIGH);  // Enable GPS power
+      delay(100);  // Give GPS time to power up
+    #endif
+    
     return false;
   }
 
@@ -159,8 +192,10 @@ bool TBeamBoard::power_init()
   PMU->setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
 
   // Set up PMU interrupts
+  #ifndef TBEAM_1W_SX1262
   pinMode(PIN_PMU_IRQ, INPUT_PULLUP);
   attachInterrupt(PIN_PMU_IRQ, setPmuFlag, FALLING);
+  #endif
 
   if (PMU->getChipModel() == XPOWERS_AXP192) {
 
@@ -184,7 +219,8 @@ bool TBeamBoard::power_init()
     PMU->setChargeTargetVoltage(XPOWERS_AXP192_CHG_VOL_4V2);    //Set battery charge-stop voltage
   }
   else if(PMU->getChipModel() == XPOWERS_AXP2101){
-    #ifdef TBEAM_SUPREME_SX1262
+    #if defined(TBEAM_SUPREME_SX1262)
+      // T-Beam Supreme configuration
       //Set up the GPS power rail
       PMU->setPowerChannelVoltage(XPOWERS_ALDO4, 3300);
       PMU->enablePowerOutput(XPOWERS_ALDO4);
@@ -234,6 +270,38 @@ bool TBeamBoard::power_init()
       PMU->disablePowerOutput(XPOWERS_DLDO1);
       PMU->disablePowerOutput(XPOWERS_DLDO2);
       PMU->disablePowerOutput(XPOWERS_VBACKUP);
+    #elif defined(TBEAM_1W_SX1262)
+      // T-Beam 1W configuration
+      // Note: T-Beam 1W uses 7.4V battery and external LDO for radio
+      // The radio is controlled via P_LORA_LDO_EN (GPIO 40) in target.cpp
+      
+      //Turn off unused power rails
+      PMU->disablePowerOutput(XPOWERS_DCDC2);
+      PMU->disablePowerOutput(XPOWERS_DCDC3);
+      PMU->disablePowerOutput(XPOWERS_DCDC4);
+      PMU->disablePowerOutput(XPOWERS_DCDC5);
+      PMU->disablePowerOutput(XPOWERS_ALDO2);
+      PMU->disablePowerOutput(XPOWERS_ALDO4);
+      PMU->disablePowerOutput(XPOWERS_BLDO1);
+      PMU->disablePowerOutput(XPOWERS_BLDO2);
+      PMU->disablePowerOutput(XPOWERS_DLDO1);
+      PMU->disablePowerOutput(XPOWERS_DLDO2);
+
+      // Wire1 already initialized at start of power_init()
+      // Set up OLED and peripheral power rail
+      PMU->setPowerChannelVoltage(XPOWERS_ALDO1, 3300);
+      PMU->enablePowerOutput(XPOWERS_ALDO1);
+      
+      // Give OLED power rail time to stabilize
+      delay(50);
+
+      // Set up GPS power rail
+      PMU->setPowerChannelVoltage(XPOWERS_ALDO3, 3300);
+      PMU->enablePowerOutput(XPOWERS_ALDO3);
+
+      // Set up GPS RTC backup power
+      PMU->setPowerChannelVoltage(XPOWERS_VBACKUP, 3300);
+      PMU->enablePowerOutput(XPOWERS_VBACKUP);
     #else
       //Turn off unused power rails
       PMU->disablePowerOutput(XPOWERS_DCDC2);
