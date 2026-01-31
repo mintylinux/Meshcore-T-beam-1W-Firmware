@@ -132,6 +132,8 @@ bool TBeamBoard::power_init()
     delay(10);  // Give I2C bus time to stabilize
   #endif
   
+  MESH_DEBUG_PRINTLN("[PMU] Initializing PMU on I2C: SDA=%d, SCL=%d, ADDR=0x%02X", PIN_BOARD_SDA, PIN_BOARD_SCL, I2C_PMU_ADD);
+  
   // Give I2C bus extra time to stabilize before PMU access
   delay(20);
 
@@ -141,14 +143,15 @@ bool TBeamBoard::power_init()
     #else
       // For T-Beam 1W: Pass Wire AND the correct I2C pins (GPIO 8/9)
       // Wire has already been initialized by ESP32Board::begin()
+      MESH_DEBUG_PRINTLN("[PMU] Trying AXP2101...");
       PMU = new XPowersAXP2101(Wire, PIN_BOARD_SDA, PIN_BOARD_SCL, I2C_PMU_ADD);
     #endif
     if (!PMU->init()) {
-        MESH_DEBUG_PRINTLN("Warning: Failed to find AXP2101 power management");
+        MESH_DEBUG_PRINTLN("[PMU] AXP2101 init() returned false");
         delete PMU;
         PMU = NULL;
     } else {
-        MESH_DEBUG_PRINTLN("AXP2101 PMU init succeeded, using AXP2101 PMU");
+        MESH_DEBUG_PRINTLN("[PMU] AXP2101 PMU init succeeded!");
     }
   }
   if (!PMU) {
@@ -156,14 +159,15 @@ bool TBeamBoard::power_init()
       PMU = new XPowersAXP192(Wire1, PIN_BOARD_SDA1, PIN_BOARD_SCL1, I2C_PMU_ADD);
     #else
       // For T-Beam 1W: Pass Wire AND the correct I2C pins (GPIO 8/9)
+      MESH_DEBUG_PRINTLN("[PMU] Trying AXP192...");
       PMU = new XPowersAXP192(Wire, PIN_BOARD_SDA, PIN_BOARD_SCL, I2C_PMU_ADD);
     #endif
      if (!PMU->init()) {
-        MESH_DEBUG_PRINTLN("Warning: Failed to find AXP192 power management");
+        MESH_DEBUG_PRINTLN("[PMU] AXP192 init() returned false");
         delete PMU;
         PMU = NULL;
     } else {
-        MESH_DEBUG_PRINTLN("AXP192 PMU init succeeded, using AXP192 PMU");
+        MESH_DEBUG_PRINTLN("[PMU] AXP192 PMU init succeeded!");
     }
   }
   

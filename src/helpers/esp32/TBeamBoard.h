@@ -208,14 +208,14 @@ public:
     
     #ifdef TBEAM_1W_SX1262
     // Fallback: ADC-based battery voltage reading for T-Beam 1W
-    // GPIO 35 (ADC1_CH7) - common battery sense pin on T-Beam variants
-    // Assumes 2x 100kΩ voltage divider (8.4V -> 4.2V max at ADC)
-    // Formula: V_batt = (ADC_raw / 4095) * 3.3V * DividerRatio * CalibrationFactor
+    // GPIO 4 (ADC1_CH3) - per Meshtastic firmware variant
+    // ADC multiplier 2.9333 as per Meshtastic configuration
+    // Formula: V_batt = (ADC_raw / 4095) * 3.3V * ADC_MULTIPLIER
     
-    const int BATTERY_ADC_PIN = 35;  // GPIO 35 (ADC1_CH7)
+    const int BATTERY_ADC_PIN = 4;  // GPIO 4 (ADC1_CH3) - per Meshtastic
     const float ADC_REFERENCE_VOLTAGE = 3300.0;  // mV (3.3V reference)
-    const float VOLTAGE_DIVIDER_RATIO = 2.0;     // 1:1 divider (2x 100kΩ)
-    const float CALIBRATION_FACTOR = 1.0;        // Adjust if readings are off
+    const float ADC_MULTIPLIER = 2.9333;  // Per Meshtastic T-Beam 1W variant
+    const int BATTERY_SENSE_SAMPLES = 30;  // Per Meshtastic
     static bool adc_initialized = false;
     
     if (!adc_initialized) {
@@ -225,17 +225,17 @@ public:
       adc_initialized = true;
     }
     
-    // Read ADC value (average of 16 samples for stability)
+    // Read ADC value (average of 30 samples for stability, per Meshtastic)
     uint32_t adc_sum = 0;
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < BATTERY_SENSE_SAMPLES; i++) {
       adc_sum += analogRead(BATTERY_ADC_PIN);
       delayMicroseconds(100);
     }
-    uint16_t adc_raw = adc_sum / 16;
+    uint16_t adc_raw = adc_sum / BATTERY_SENSE_SAMPLES;
     
     // Convert ADC reading to battery voltage
-    // V_batt = (ADC_raw / 4095) * 3.3V * 2 * CalibrationFactor
-    float battery_voltage_f = (adc_raw / 4095.0) * ADC_REFERENCE_VOLTAGE * VOLTAGE_DIVIDER_RATIO * CALIBRATION_FACTOR;
+    // V_batt = (ADC_raw / 4095) * 3.3V * ADC_MULTIPLIER
+    float battery_voltage_f = (adc_raw / 4095.0) * ADC_REFERENCE_VOLTAGE * ADC_MULTIPLIER;
     uint16_t battery_voltage = (uint16_t)battery_voltage_f;
     
     // Debug output (print every 10 seconds)
