@@ -6,6 +6,7 @@
 
 uint32_t deviceOnline = 0x00;
 
+
 bool pmuInterrupt;
 static void setPmuFlag()
 {

@@ -3,9 +3,15 @@
 
 TBeamBoard board;
 
-static bool fanRunning = false;
-static uint32_t fanStartTime = 0;
-static const uint32_t FAN_RUN_TIME_MS = 5000; // 5 seconds after transmission
+
+float currentTemperature = 0.0;
+
+ bool fanRunning = false;
+
+static unsigned long lastTempCheck = 0;
+const unsigned long tempCheckInterval = 2000;
+
+
 
 #ifdef DISPLAY_CLASS
   DISPLAY_CLASS display;
@@ -29,41 +35,69 @@ AutoDiscoverRTCClock rtc_clock(fallback_clock);
   EnvironmentSensorManager sensors;
 #endif
 
-void activate_fan() {
-  #ifdef P_FAN_CTRL
-    digitalWrite(P_FAN_CTRL, HIGH);
-    fanRunning = true;
-    fanStartTime = millis();
+
+
+void initThermalManagement() {
+    pinMode(P_FAN_CTRL, OUTPUT);
+    digitalWrite(P_FAN_CTRL, LOW); // Start with fan OFF
+    fanRunning = false;
     
-   // #ifdef DEBUG_FAN
-    //Serial.printf("[FAN] Activated at %lu ms\n", fanStartTime);
-    //#endif
-  #endif
+    // Configure ADC for the thermistor pin (ESP32 specific)
+    analogReadResolution(12); // Set to 12-bit resolution (0-4095)
+    // Note: You may not need to set the attenuation explicitly for 3.3V,
+    // but if readings are off, check ADC_ATTEN_DB_11 for full 3.3V range.
+
+    Serial.println("Thermal management system initialized.");
 }
+
+float readThermistorTemperature() {
+    // 1. Read the analog value
+    int adcValue = analogRead(THERMISTOR_PIN);
+    
+    // 2. Convert ADC value to voltage
+    float voltage = (adcValue / (float)ADC_MAX) * 3.3; // Assuming a 3.3V reference
+    
+    // 3. Calculate thermistor resistance from voltage divider
+    // Formula: R_thermistor = ( (Vcc * R_series) / V_adc ) - R_series
+    float thermistorResistance = (3.3 * SERIES_RESISTOR) / voltage - SERIES_RESISTOR;
+    
+    // 4. Use Steinhart-Hart equation to convert resistance to temperature in Kelvin
+    float steinhart = thermistorResistance / THERMISTOR_NOMINAL;   // (R/Ro)
+    steinhart = log(steinhart);                                   // ln(R/Ro)
+    steinhart /= B_COEFFICIENT;                                   // 1/B * ln(R/Ro)
+    steinhart += 1.0 / (TEMPERATURE_NOMINAL + 273.15);            // + (1/To)
+    steinhart = 1.0 / steinhart;                                  // Invert
+    
+    // 5. Convert from Kelvin to Celsius and return
+    float temperatureC = steinhart - 273.15;
+    
+    // Optional: Print debug info
+     //Serial.printf("ADC: %d, Volt: %.2fV, Res: %.0fΩ, Temp: %.1fC\n", 
+     //              adcValue, voltage, thermistorResistance, temperatureC);
+    
+    return temperatureC;
+}
+
 void update_fan_control() {
-  #ifdef P_FAN_CTRL
-    if (fanRunning) {
-      uint32_t currentTime = millis();
-      uint32_t elapsed;
-      
-      // Handle millis() overflow
-      if (currentTime >= fanStartTime) {
-        elapsed = currentTime - fanStartTime;
-      } else {
-        elapsed = (UINT32_MAX - fanStartTime) + currentTime;
-      }
-      
-      if (elapsed >= FAN_RUN_TIME_MS) {
+#ifdef P_FAN_CTRL
+    currentTemperature = readThermistorTemperature();
+    
+    if (!fanRunning && currentTemperature > TEMP_THRESHOLD_HIGH)
+     {
+        pinMode(P_FAN_CTRL, OUTPUT);
+        digitalWrite(P_FAN_CTRL, HIGH);
+        fanRunning = true;
+        Serial.printf("Fan ON at %.1f°C\n", currentTemperature);
+    } 
+    else if (fanRunning && currentTemperature < TEMP_THRESHOLD_LOW) {
+        pinMode(P_FAN_CTRL, OUTPUT);
         digitalWrite(P_FAN_CTRL, LOW);
         fanRunning = false;
-        
-       // #ifdef DEBUG_FAN
-       // Serial.printf("[FAN] Deactivated after %lu ms\n", elapsed);
-       // #endif
-      }
+        Serial.printf("Fan OFF at %.1f°C\n", currentTemperature);
     }
-  #endif
+#endif
 }
+
 
 bool radio_init() {
   // Enable the radio LDO (must be HIGH to power on radio)
@@ -75,19 +109,13 @@ bool radio_init() {
   pinMode(P_LORA_CTRL, OUTPUT);
   digitalWrite(P_LORA_CTRL, HIGH);  // Start in RX mode (LNA on)
   
-  // Enable cooling fan control
-  #ifdef P_FAN_CTRL
-  pinMode(P_FAN_CTRL, OUTPUT);
-  digitalWrite(P_FAN_CTRL, LOW);  // Turn off fan initially
-  #endif
   
   fallback_clock.begin();
   rtc_clock.begin(Wire);  // T-Beam 1W uses single I2C bus on Wire
   
-  // Reset fan timer
-  fanRunning = false;
-  fanStartTime = 0;
-  
+
+
+ 
   return radio.std_init(&spi);
 }
 

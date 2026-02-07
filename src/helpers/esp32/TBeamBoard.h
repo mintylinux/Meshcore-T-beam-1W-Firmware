@@ -79,14 +79,29 @@
   #define PIN_GPS_EN       16
   #define PIN_GPS_PPS      7
 
-  #define PIN_FAN_CTRL     41  //Cooling fan control
-
   //I2C addresses (single I2C bus)
   #define I2C_OLED_ADD     0x3C  //SH1106 OLED I2C address
   #define I2C_PMU_ADD      0x34  //AXP2101 I2C address
   
   #define PMU_WIRE_PORT  Wire
   #define RTC_WIRE_PORT  Wire
+
+  #define THERMISTOR_PIN 14   // ADC Pin connected to the voltage divider
+  #define P_FAN_CTRL 41  // GPIO for the fan (PIN_FAN_CTRL)
+
+  // Thermistor Parameters (CRITICAL: For NCP18XH103F03RB)
+  #define THERMISTOR_NOMINAL 10000  // Resistance at 25°C (10kΩ)
+  #define TEMPERATURE_NOMINAL 25    // Temp. for nominal resistance (25°C)
+  #define B_COEFFICIENT 3380        // Beta coefficient from datasheet
+  #define SERIES_RESISTOR 10000     // Value of the other resistor in the divider (10kΩ)
+
+  // ADC Settings for ESP32
+  #define ADC_MAX 4095.0            // 12-bit ADC resolution (0-4095)
+
+  // Temperature Control Thresholds with HYSTERESIS
+  #define TEMP_THRESHOLD_HIGH 37.0  // Turn fan ON above this temp (in °C)
+  #define TEMP_THRESHOLD_LOW 35.0   // Turn fan OFF below this temp (in °C)
+
 #endif
 
 #ifdef TBEAM_SX1262
@@ -127,8 +142,9 @@
 
 // Forward declarations for fan control (defined in target.cpp)
 #ifdef TBEAM_1W_SX1262
-extern void activate_fan();
+//extern void activate_fan();
 extern void update_fan_control();
+extern void initThermalManagement();
 #endif
 
 class TBeamBoard : public ESP32Board {
@@ -169,7 +185,10 @@ public:
   void onBeforeTransmit() override{
     digitalWrite(P_LORA_TX_LED, LOW);   // turn TX LED on - invert pin for SX1276
     #if defined(TBEAM_1W_SX1262) && defined(P_FAN_CTRL)
-    activate_fan();  // Activate cooling fan for 1W PA
+    //activate_fan();  // Activate cooling fan for 1W PA
+    update_fan_control();
+    initThermalManagement();
+    
     #endif
   }
   void onAfterTransmit() override{
