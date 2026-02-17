@@ -1,4 +1,6 @@
-# MeshCore Repeater & Room Server CLI Commands
+# CLI Commands
+
+This document provides an overview of CLI commands that can be sent to MeshCore Repeaters, Room Servers and Sensors.
 
 ## Navigation
 
@@ -642,7 +644,7 @@
 **Usage:** 
 - `region`
 
-**Serial Only:** Yes
+**Serial Only:** For firmware older than 1.12.0
 
 ---
 
