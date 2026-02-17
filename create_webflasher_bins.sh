@@ -6,10 +6,10 @@ set -e
 
 # Configuration
 CHIP="esp32s3"
-FLASH_MODE="qio"
+FLASH_MODE="dio"  # Must match PlatformIO (not qio!)
 FLASH_FREQ="80m"
-FLASH_SIZE="16MB"  # T-Beam 1W has 16MB flash, not 4MB!
-VERSION="v1.12.0"
+FLASH_SIZE="4MB"  # PlatformIO uses 4MB setting (board has 16MB physically)
+VERSION="v1.13.0"
 
 # Paths
 BUILD_DIR=".pio/build"
@@ -77,9 +77,9 @@ create_merged_bin() {
 }
 
 # Create binaries for all three firmware types
-create_merged_bin "T_Beam_1W_SX1262_companion_radio_ble" "T-Beam-1W-CompanionBLE-${VERSION}.bin"
-create_merged_bin "T_Beam_1W_SX1262_repeater" "T-Beam-1W-Repeater-${VERSION}.bin"
-create_merged_bin "T_Beam_1W_SX1262_room_server" "T-Beam-1W-RoomServer-${VERSION}.bin"
+create_merged_bin "LilyGo_TBeam_1W_companion_radio_ble" "T-Beam-1W-CompanionBLE-${VERSION}.bin"
+create_merged_bin "LilyGo_TBeam_1W_repeater" "T-Beam-1W-Repeater-${VERSION}.bin"
+create_merged_bin "LilyGo_TBeam_1W_room_server" "T-Beam-1W-RoomServer-${VERSION}.bin"
 
 echo ""
 echo "==========================================="

@@ -1,12 +1,12 @@
 {
   "name": "LilyGo T-Beam 1W (ESP32-S3)",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "builds": [
     {
       "chipFamily": "ESP32-S3",
       "parts": [
         {
-          "path": "merged/T-Beam-1W-CompanionBLE-v1.12.0.bin",
+          "path": "merged/T-Beam-1W-CompanionBLE-v1.13.0.bin",
           "offset": 0
         }
       ]
