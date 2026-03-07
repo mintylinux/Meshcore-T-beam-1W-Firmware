@@ -1,6 +1,39 @@
 # Changelog - T-Beam 1W Firmware
 
 All notable changes to the MeshCore T-Beam 1W firmware will be documented in this file.
+## [1.14.0] - 2026-03-07
+
+### Added
+- Updated firmware base to MeshCore `v1.14.0` (upstream merge from `meshcore-dev/MeshCore`)
+- New v1.14.0 merged firmware artifacts for T-Beam 1W:
+  - `T-Beam-1W-CompanionBLE-v1.14.0-merged.bin`
+  - `T-Beam-1W-Repeater-v1.14.0-merged.bin`
+  - `T-Beam-1W-RoomServer-v1.14.0-merged.bin`
+
+### Changed
+- Updated webflasher packaging/version references from `v1.13.0` to `v1.14.0`:
+  - `create_webflasher_bins.sh`
+  - `webflasher/manifest.json`
+  - `webflasher/flash-windows.bat`
+  - `webflasher/flash-windows.ps1`
+- Rebuilt all T-Beam 1W target variants on top of MeshCore v1.14.0
+
+### Fixed
+- Resolved upstream merge conflict in `EnvironmentSensorManager.cpp` while preserving expected GPS loop behavior
+- Re-generated merged binaries with required components/offsets for direct flashing:
+  - bootloader @ `0x0000`
+  - partitions @ `0x8000`
+  - boot_app0 @ `0xE000`
+  - firmware @ `0x10000`
+
+### Technical Details (T-Beam 1W Specific)
+- Flash Mode: DIO (Dual I/O)
+- Flash Size: 4MB
+- Flash Frequency: 80MHz
+- Chip: ESP32-S3
+- Board: LilyGo T-Beam 1W with SX1262 LoRa radio
+
+---
 
 ## [1.13.0] - 2026-02-17
 
@@ -25,6 +58,12 @@ All notable changes to the MeshCore T-Beam 1W firmware will be documented in thi
   - Granular auto-add contact type filtering
 - **ESP32 Features**
   - ESP32RTCClock for repeater (keeps time across reboots)
+- **Temperature-Based Fan Control** (T-Beam 1W)
+  - Smart fan activation based on NTC thermistor readings (GPIO 14)
+  - Fan turns ON when temperature exceeds 37°C
+  - Fan turns OFF when temperature drops below 35°C (hysteresis prevents oscillation)
+  - Replaces always-on fan behavior with intelligent thermal management
+  - Uses Steinhart-Hart equation for accurate temperature calculation
 
 ### Fixed
 - CAD (Channel Activity Detection) detection fixed
