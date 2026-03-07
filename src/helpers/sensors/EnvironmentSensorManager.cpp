@@ -701,7 +701,7 @@ void EnvironmentSensorManager::start_gps() {
   _location->begin();
   _location->reset();
 
-#ifndef PIN_GPS_RESET
+#ifndef PIN_GPS_EN
   MESH_DEBUG_PRINTLN("Start GPS is N/A on this board. Actual GPS state unchanged");
 #endif
 }
@@ -723,21 +723,11 @@ void EnvironmentSensorManager::stop_gps() {
 
 void EnvironmentSensorManager::loop() {
   static long next_gps_update = 0;
-  static long next_gps_debug = 0;
 
   #if ENV_INCLUDE_GPS
-  // Debug GPS serial data availability every 10 seconds
-  if (millis() > next_gps_debug) {
-    int avail = Serial1.available();
-    bool enabled = _location->isEnabled();
-    MESH_DEBUG_PRINTLN("[GPS] Serial1.available()=%d, GPS enabled=%d, active=%d, detected=%d", avail, enabled, gps_active, gps_detected);
-    // Send a test command to GPS to verify it's alive
-    Serial1.println("$PMTK000*32"); // Query firmware version
-    MESH_DEBUG_PRINTLN("[GPS] Sent test command to GPS");
-    next_gps_debug = millis() + 10000;
+  if (gps_active) {
+    _location->loop();
   }
-  
-  _location->loop();
   if (millis() > next_gps_update) {
 
     if(gps_active){
