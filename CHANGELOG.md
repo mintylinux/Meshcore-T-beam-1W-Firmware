@@ -1,6 +1,22 @@
 # Changelog - T-Beam 1W Firmware
 
 All notable changes to the MeshCore T-Beam 1W firmware will be documented in this file.
+## [1.14.1] - 2026-03-29
+
+### Updated
+- Merged upstream MeshCore `v1.14.1` from `meshcore-dev/MeshCore`
+- Rebuilt all T-Beam 1W target variants:
+  - `T-Beam-1W-CompanionBLE-v1.14.1-merged.bin`
+  - `T-Beam-1W-Repeater-v1.14.1-merged.bin`
+  - `T-Beam-1W-RoomServer-v1.14.1-merged.bin`
+
+### Upstream Changes (v1.14.0 → v1.14.1)
+- Repeater and Room Server: flood advert timer now uses path_hash_mode pref
+- MCU temperature added to telemetry responses from room servers
+- Remote LNA support
+- Various bug fixes and documentation updates
+- Updated webflasher references to v1.14.1
+
 ## [1.14.0] - 2026-03-07
 
 ### Added

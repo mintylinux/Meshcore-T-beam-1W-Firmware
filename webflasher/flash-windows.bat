@@ -41,13 +41,13 @@ echo.
 set /p choice="Select firmware type (1-3): "
 
 if "%choice%"=="1" (
-    set FIRMWARE=merged\T-Beam-1W-CompanionBLE-v1.13.0.bin
+    set FIRMWARE=merged\T-Beam-1W-CompanionBLE-v1.14.1.bin
     set FWNAME=Companion BLE
 ) else if "%choice%"=="2" (
-    set FIRMWARE=merged\T-Beam-1W-Repeater-v1.13.0.bin
+    set FIRMWARE=merged\T-Beam-1W-Repeater-v1.14.1.bin
     set FWNAME=Repeater
 ) else if "%choice%"=="3" (
-    set FIRMWARE=merged\T-Beam-1W-RoomServer-v1.13.0.bin
+    set FIRMWARE=merged\T-Beam-1W-RoomServer-v1.14.1.bin
     set FWNAME=Room Server
 )
     echo Invalid choice

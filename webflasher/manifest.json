@@ -6,7 +6,7 @@
       "chipFamily": "ESP32-S3",
       "parts": [
         {
-          "path": "merged/T-Beam-1W-CompanionBLE-v1.13.0.bin",
+          "path": "merged/T-Beam-1W-CompanionBLE-v1.14.1.bin",
           "offset": 0
         }
       ]

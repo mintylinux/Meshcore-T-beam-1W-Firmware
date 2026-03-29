@@ -45,15 +45,15 @@ $choice = Read-Host "Select firmware type (1-3)"
 
 switch ($choice) {
     "1" {
-        $firmware = "merged\T-Beam-1W-CompanionBLE-v1.13.0.bin"
+        $firmware = "merged\T-Beam-1W-CompanionBLE-v1.14.1.bin"
         $fwname = "Companion BLE"
     }
     "2" {
-        $firmware = "merged\T-Beam-1W-Repeater-v1.13.0.bin"
+        $firmware = "merged\T-Beam-1W-Repeater-v1.14.1.bin"
         $fwname = "Repeater"
     }
     "3" {
-        $firmware = "merged\T-Beam-1W-RoomServer-v1.13.0.bin"
+        $firmware = "merged\T-Beam-1W-RoomServer-v1.14.1.bin"
         $fwname = "Room Server"
     }
     default {

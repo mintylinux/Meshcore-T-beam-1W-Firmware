@@ -9,7 +9,7 @@ CHIP="esp32s3"
 FLASH_MODE="dio"  # Must match PlatformIO (not qio!)
 FLASH_FREQ="80m"
 FLASH_SIZE="4MB"  # PlatformIO uses 4MB setting (board has 16MB physically)
-VERSION="v1.13.0"
+VERSION="v1.14.1"
 
 # Paths
 BUILD_DIR=".pio/build"
@@ -58,7 +58,7 @@ create_merged_bin() {
     fi
     
     # Create merged binary with all components including boot_app0.bin
-    python3 -m esptool --chip "$CHIP" merge_bin \
+    /home/chuck/.platformio/packages/tool-esptoolpy/esptool.py --chip "$CHIP" merge_bin \
         -o "$output" \
         --flash_mode "$FLASH_MODE" \
         --flash_freq "$FLASH_FREQ" \
@@ -99,7 +99,7 @@ echo "Flash freq: $FLASH_FREQ"
 echo "Flash size: $FLASH_SIZE (PlatformIO setting)"
 echo ""
 echo "To flash with esptool:"
-echo "  python3 -m esptool --chip esp32s3 --port /dev/ttyACM5 --baud 460800 write_flash 0x0 $OUTPUT_DIR/T-Beam-1W-CompanionBLE-${VERSION}.bin"
+echo "  /home/chuck/.platformio/packages/tool-esptoolpy/esptool.py --chip esp32s3 --port /dev/ttyACM5 --baud 460800 write_flash 0x0 $OUTPUT_DIR/T-Beam-1W-CompanionBLE-${VERSION}.bin"
 echo ""
 echo "Note: MeshCore webflasher currently flashes at wrong offset (0x10000)."
 echo "Use esptool directly until webflasher is updated."
