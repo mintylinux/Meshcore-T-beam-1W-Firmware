@@ -77,9 +77,9 @@ create_merged_bin() {
 }
 
 # Create binaries for all three firmware types
-create_merged_bin "LilyGo_TBeam_1W_companion_radio_ble" "T-Beam-1W-CompanionBLE-${VERSION}.bin"
-create_merged_bin "LilyGo_TBeam_1W_repeater" "T-Beam-1W-Repeater-${VERSION}.bin"
-create_merged_bin "LilyGo_TBeam_1W_room_server" "T-Beam-1W-RoomServer-${VERSION}.bin"
+create_merged_bin "T_Beam_1W_SX1262_companion_radio_ble" "T-Beam-1W-CompanionBLE-${VERSION}-merged.bin"
+create_merged_bin "T_Beam_1W_SX1262_repeater" "T-Beam-1W-Repeater-${VERSION}-merged.bin"
+create_merged_bin "T_Beam_1W_SX1262_room_server" "T-Beam-1W-RoomServer-${VERSION}-merged.bin"
 
 echo ""
 echo "==========================================="

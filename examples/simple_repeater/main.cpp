@@ -154,6 +154,10 @@ void loop() {
 #endif
   rtc_clock.tick();
 
+#ifdef P_FAN_CTRL
+  update_fan_control();
+#endif
+
   if (the_mesh.getNodePrefs()->powersaving_enabled && !the_mesh.hasPendingWork()) {
     #if defined(NRF52_PLATFORM)
     board.sleep(1800); // nrf ignores seconds param, sleeps whenever possible
