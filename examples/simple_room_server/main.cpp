@@ -157,4 +157,8 @@ void loop() {
 #ifdef HAS_EXTERNAL_WATCHDOG
   external_watchdog.loop();
 #endif
+
+#if defined(TBEAM_1W_SX1262) && defined(P_FAN_CTRL)
+  update_fan_control();  // Temperature-based fan control
+#endif
 }
