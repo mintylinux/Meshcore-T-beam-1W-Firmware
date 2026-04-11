@@ -256,6 +256,10 @@ void loop() {
   external_watchdog.loop();
 #endif
 
+#if defined(TBEAM_1W_SX1262) && defined(P_FAN_CTRL)
+  update_fan_control();  // Temperature-based fan control
+#endif
+
   if (!the_mesh.hasPendingWork()) {
 #if defined(NRF52_PLATFORM)
     board.sleep(0); // nrf ignores seconds param, sleeps whenever possible
