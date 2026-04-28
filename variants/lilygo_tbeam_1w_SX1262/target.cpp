@@ -7,10 +7,10 @@ TBeamBoard board;
 // On-die ESP32 MCU temperature thresholds (Celsius) with hysteresis.
 // Override any of these via build_flags if needed.
 #ifndef FAN_TEMP_ON_C
-  #define FAN_TEMP_ON_C              37.0f   // turn fan on at >= 37 C
+  #define FAN_TEMP_ON_C              45.0f   // turn fan on at >= 45 C
 #endif
 #ifndef FAN_TEMP_OFF_C
-  #define FAN_TEMP_OFF_C             33.0f   // turn fan off below 33 C (4 C hysteresis)
+  #define FAN_TEMP_OFF_C             41.0f   // turn fan off below 41 C (4 C hysteresis)
 #endif
 #ifndef FAN_MIN_RUN_TIME_MS
   #define FAN_MIN_RUN_TIME_MS        5000    // minimum runtime to avoid rapid cycling
