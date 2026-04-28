@@ -2,6 +2,13 @@
 #define RADIOLIB_STATIC_ONLY 1
 #include "RadioLibWrappers.h"
 
+#ifdef P_FAN_CTRL
+// Provided by variants that have an active cooling fan (e.g. LilyGo T-Beam 1W).
+// Fired once after each transmission completes; the variant runs the fan for a
+// fixed duration and turns it off via update_fan_control() in the main loop.
+extern void activate_fan();
+#endif
+
 #define STATE_IDLE       0
 #define STATE_RX         1
 #define STATE_TX_WAIT    3
@@ -166,6 +173,9 @@ void RadioLibWrapper::onSendFinished() {
   _radio->finishTransmit();
   _board->onAfterTransmit();
   state = STATE_IDLE;
+#ifdef P_FAN_CTRL
+  activate_fan();
+#endif
 }
 
 bool RadioLibWrapper::isChannelActive() {
