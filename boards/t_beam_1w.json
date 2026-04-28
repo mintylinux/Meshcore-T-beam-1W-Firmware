@@ -24,7 +24,7 @@
             ]
         ],
         "mcu": "esp32s3",
-        "variant": "lilygo_tbeam_1w"
+        "variant": "esp32s3"
     },
     "connectivity": [
         "wifi",
