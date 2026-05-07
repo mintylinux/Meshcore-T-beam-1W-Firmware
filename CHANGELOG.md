@@ -1,6 +1,52 @@
 # Changelog - T-Beam 1W Firmware
 
 All notable changes to the MeshCore T-Beam 1W firmware will be documented in this file.
+## [1.15.0] - 2026-05-07
+
+### Updated
+- Merged upstream MeshCore `v1.15.0` from `meshcore-dev/MeshCore`
+- Rebuilt and verified all T-Beam 1W SX1262 target variants:
+  - `T_Beam_1W_SX1262_companion_radio_ble`
+  - `T_Beam_1W_SX1262_companion_radio_usb`
+  - `T_Beam_1W_SX1262_repeater`
+  - `T_Beam_1W_SX1262_room_server`
+- Generated new merged firmware artifacts:
+  - `T-Beam-1W-CompanionBLE-v1.15.0-merged.bin`
+  - `T-Beam-1W-CompanionUSB-v1.15.0-merged.bin`
+  - `T-Beam-1W-Repeater-v1.15.0-merged.bin`
+  - `T-Beam-1W-RoomServer-v1.15.0-merged.bin`
+
+### Upstream Changes (v1.14.1 → v1.15.0)
+- Default Scope support
+- New `GROUP_DATA` binary packet support
+- Radio `rxgain` now enabled by default
+- Radio frequency range extended down to 150 MHz
+- New `get|set dutycycle` CLI command
+- WiFi companion fixes for Heltec V4 and T-Beam 1W
+- nRF companion OTA update support
+- Additional sensor, board support, and stability fixes
+
+### T-Beam 1W Specific Changes
+- Added `SX126X_REGISTER_PATCH=1` for a more stable SX1262 noise floor
+- Added `USE_SX1262` to the shared T-Beam 1W SX1262 build flags
+- Added `T_Beam_1W_SX1262_companion_radio_usb` build target
+- Switched from `min_spiffs.csv` to `default_16MB.csv` to use the full 16MB flash
+- Fixed `boards/t_beam_1w.json` to use the generic Arduino `esp32s3` variant so all SX1262 targets build correctly
+- Preserved and integrated T-Beam 1W fan control support in all three runtime loops:
+  - Companion
+  - Repeater
+  - Room Server
+- Updated the fan thermostat to use MCU temperature with hysteresis:
+  - Fan turns ON at `45°C`
+  - Fan turns OFF below `41°C`
+  - Minimum runtime remains `5s`
+
+### Technical Details (T-Beam 1W Specific)
+- Flash Mode: DIO (Dual I/O)
+- Flash Size: 16MB
+- Flash Frequency: 80MHz
+- Chip: ESP32-S3
+- Board: LilyGo T-Beam 1W with SX1262 LoRa radio
 ## [1.14.1] - 2026-03-29
 
 ### Updated
