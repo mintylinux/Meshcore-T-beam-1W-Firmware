@@ -8,13 +8,18 @@ set -e
 CHIP="esp32s3"
 FLASH_MODE="dio"  # Must match PlatformIO (not qio!)
 FLASH_FREQ="80m"
-FLASH_SIZE="4MB"  # PlatformIO uses 4MB setting (board has 16MB physically)
-VERSION="v1.14.1"
+FLASH_SIZE="16MB"  # default_16MB.csv partition table uses full 16MB
+VERSION="v1.15.0"
 
 # Paths
 BUILD_DIR=".pio/build"
 OUTPUT_DIR="webflasher/merged"
 BOOT_APP0="$HOME/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin"
+PYTHON_BIN=".venv/bin/python"
+
+if [ ! -x "$PYTHON_BIN" ]; then
+    PYTHON_BIN="python3"
+fi
 
 # Create output directory if it doesn't exist
 mkdir -p "$OUTPUT_DIR"
@@ -58,7 +63,7 @@ create_merged_bin() {
     fi
     
     # Create merged binary with all components including boot_app0.bin
-    /home/chuck/.platformio/packages/tool-esptoolpy/esptool.py --chip "$CHIP" merge_bin \
+    "$PYTHON_BIN" /home/chuck/.platformio/packages/tool-esptoolpy/esptool.py --chip "$CHIP" merge_bin \
         -o "$output" \
         --flash_mode "$FLASH_MODE" \
         --flash_freq "$FLASH_FREQ" \
@@ -76,8 +81,9 @@ create_merged_bin() {
     fi
 }
 
-# Create binaries for all three firmware types
+# Create binaries for all firmware types
 create_merged_bin "T_Beam_1W_SX1262_companion_radio_ble" "T-Beam-1W-CompanionBLE-${VERSION}-merged.bin"
+create_merged_bin "T_Beam_1W_SX1262_companion_radio_usb" "T-Beam-1W-CompanionUSB-${VERSION}-merged.bin"
 create_merged_bin "T_Beam_1W_SX1262_repeater" "T-Beam-1W-Repeater-${VERSION}-merged.bin"
 create_merged_bin "T_Beam_1W_SX1262_room_server" "T-Beam-1W-RoomServer-${VERSION}-merged.bin"
 
@@ -99,7 +105,7 @@ echo "Flash freq: $FLASH_FREQ"
 echo "Flash size: $FLASH_SIZE (PlatformIO setting)"
 echo ""
 echo "To flash with esptool:"
-echo "  /home/chuck/.platformio/packages/tool-esptoolpy/esptool.py --chip esp32s3 --port /dev/ttyACM5 --baud 460800 write_flash 0x0 $OUTPUT_DIR/T-Beam-1W-CompanionBLE-${VERSION}.bin"
+echo "  $PYTHON_BIN /home/chuck/.platformio/packages/tool-esptoolpy/esptool.py --chip esp32s3 --port /dev/ttyACM5 --baud 460800 write_flash 0x0 $OUTPUT_DIR/T-Beam-1W-CompanionBLE-${VERSION}-merged.bin"
 echo ""
 echo "Note: MeshCore webflasher currently flashes at wrong offset (0x10000)."
 echo "Use esptool directly until webflasher is updated."
